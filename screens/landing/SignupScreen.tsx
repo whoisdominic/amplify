@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   TextInput,
 } from "react-native";
+import { color } from "react-native-reanimated";
 
 const { width, height } = Dimensions.get("window");
 
@@ -22,6 +23,8 @@ export default function SignupScreen({ navigation }) {
     secureTextEntry: true,
   });
   const [twoFactor, setTwoFactor] = useState(false);
+  const [twoFactorId, setTwoFactorId] = useState("");
+  const [twoFactorInput, setTwoFactorInput] = useState("");
 
   const handleEmailInput = (val: any) => {
     if (val.length !== 0) {
@@ -47,6 +50,7 @@ export default function SignupScreen({ navigation }) {
   };
 
   const handleSubmit = async () => {
+    setError(null);
     console.log(userData);
     try {
       const signupCall = await Auth.signUp({
@@ -58,17 +62,22 @@ export default function SignupScreen({ navigation }) {
       });
       console.log("signup call", signupCall);
       setTwoFactor(true);
+      setTwoFactorId(userData.email);
     } catch (error) {
       console.log(error);
+      setError(error.message);
     }
   };
 
-  const handleTwoFactor = async (factorCode) => {
-    console.log(factorCode);
+  const handleTwoFactorId = (val) => {
+    setTwoFactorInput(val);
+  };
+
+  const handleTwoFactor = async () => {
     try {
       const twoFactorCall = await Auth.confirmSignUp(
-        userData.email,
-        factorCode
+        twoFactorId,
+        twoFactorInput
       );
       console.log(twoFactorCall);
       /* Once the user successfully confirms their account, update form state to show the sign in form*/
@@ -80,7 +89,6 @@ export default function SignupScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
-      <SafeAreaView />
       <View style={styles.form}>
         <View style={styles.action}>
           <Text style={styles.formTxt}>Email</Text>
@@ -88,7 +96,7 @@ export default function SignupScreen({ navigation }) {
           <TextInput
             placeholder={"Enter Email"}
             placeholderTextColor="#FFFFFF"
-            maxLength={20}
+            maxLength={50}
             onChangeText={handleEmailInput}
             style={styles.formInput}
           />
@@ -104,13 +112,49 @@ export default function SignupScreen({ navigation }) {
             style={styles.formInput}
           />
         </View>
+        {error ? (
+          <Text
+            style={{
+              color: "red",
+              fontSize: 15,
+              textAlign: "center",
+              fontWeight: "700",
+              maxWidth: width * 0.8,
+            }}
+          >
+            {error}
+          </Text>
+        ) : (
+          <></>
+        )}
         <TouchableOpacity style={styles.btn}>
           <Text style={styles.btnTxt} onPress={handleSubmit}>
             Signup
           </Text>
         </TouchableOpacity>
 
-        {/* {twoFactor ? <></> : <> </>} */}
+        {twoFactor ? (
+          <View>
+            <TextInput
+              placeholder={"Enter Code"}
+              placeholderTextColor="#FFFFFF"
+              maxLength={15}
+              onChangeText={handleTwoFactorId}
+              style={styles.formInput}
+            />
+            <TouchableOpacity>
+              <View style={styles.codeBtnCont}>
+                <TouchableOpacity onPress={handleTwoFactor}>
+                  <View style={styles.codeBtn}>
+                    <Text>Enter</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <></>
+        )}
       </View>
       <TouchableOpacity style={styles.btn}>
         <Text style={styles.btnTxt} onPress={() => navigation.goBack()}>
@@ -136,6 +180,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: 35,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
   },
   btnTxt: {
     fontSize: 28,
@@ -150,7 +198,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   action: {
-    marginVertical: 25,
+    marginVertical: 10,
   },
   formInput: {
     width: width * 0.75,
@@ -160,5 +208,23 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginVertical: 25,
     textAlign: "center",
+  },
+  codeBtnCont: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: -30,
+  },
+  codeBtn: {
+    backgroundColor: "#37de37",
+    width: width * 0.45,
+    height: 60,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 35,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
   },
 });
